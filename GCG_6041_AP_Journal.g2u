@@ -1,0 +1,2330 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_Report..Create
+Gui.F_Report..Caption("AP Journal Summary")
+Gui.F_Report..Size(10905,6975)
+Gui.F_Report..MinX(0)
+Gui.F_Report..MinY(0)
+Gui.F_Report..Position(0,0)
+Gui.F_Report..BackColor(-2147483633)
+Gui.F_Report..MousePointer(0)
+Gui.F_Report..Event(UnLoad,F_Report_UnLoad)
+Gui.F_Report.ddlMonth.Create(DropDownList)
+Gui.F_Report.ddlMonth.Size(1665,330)
+Gui.F_Report.ddlMonth.Position(75,315)
+Gui.F_Report.lblMonth.Create(Label,"Month",True,660,255,0,150,105,True,0,"Arial",8,-2147483633,0)
+Gui.F_Report.lblYear.Create(Label,"Year",True,570,255,0,1890,105,True,0,"Arial",8,-2147483633,0)
+Gui.F_Report.ddlYear.Create(DropDownList)
+Gui.F_Report.ddlYear.Size(1095,330)
+Gui.F_Report.ddlYear.Position(1815,315)
+Gui.F_Report.cmdRefresh.Create(Button)
+Gui.F_Report.cmdRefresh.Size(300,300)
+Gui.F_Report.cmdRefresh.Position(3000,315)
+Gui.F_Report.cmdRefresh.Caption("Refresh")
+Gui.F_Report.cmdRefresh.Event(Click,cmdRefresh_Click)
+Gui.F_Report.progressBarRefresh.Create(ProgressBar)
+Gui.F_Report.progressBarRefresh.Size(6015,255)
+Gui.F_Report.progressBarRefresh.Position(4695,345)
+Gui.F_Report.progressBarRefresh.Anchor(13)
+Gui.F_Report.progressBarRefresh.Visible(False)
+Gui.F_Report.progressBarRefresh.Max(100)
+Gui.F_Report.gsgcReport.Create(GsGridControl)
+Gui.F_Report.gsgcReport.Size(10785,5265)
+Gui.F_Report.gsgcReport.Position(0,795)
+Gui.F_Report.gsgcReport.Anchor(15)
+Gui.F_Report.cmdExport.Create(Button)
+Gui.F_Report.cmdExport.Size(855,375)
+Gui.F_Report.cmdExport.Position(180,6210)
+Gui.F_Report.cmdExport.Anchor(6)
+Gui.F_Report.cmdExport.Caption("Export")
+Gui.F_Report.cmdExport.Event(Click,cmdExport_Click)
+Gui.F_Report.optDetail.Create(Option)
+Gui.F_Report.optDetail.Size(1095,255)
+Gui.F_Report.optDetail.Position(3465,90)
+Gui.F_Report.optDetail.Caption("Detail")
+Gui.F_Report.optSummary.Create(Option)
+Gui.F_Report.optSummary.Size(1095,255)
+Gui.F_Report.optSummary.Position(3465,435)
+Gui.F_Report.optSummary.Caption("Summary")
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_6041_ErrorHandling.lib")
+V.Global.iMonth.Declare
+V.Global.iYear.Declare
+V.Global.bDetail.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Author: BixRB
+'Date: 6 Jun 2020
+'GCG_6041_AP_Journal.g2u
+'Carter Manufacturing Company, Inc.
+'Display AP Journal data and include excel exportting functionality
+V.Local.iCnt.Declare
+F.Intrinsic.Control.Try
+
+Gui.F_Report.ddlMonth.AddItem("All")
+Gui.F_Report.ddlMonth.AddItem("January (1)")
+Gui.F_Report.ddlMonth.AddItem("February (2)")
+Gui.F_Report.ddlMonth.AddItem("March (3)")
+Gui.F_Report.ddlMonth.AddItem("April (4)")
+Gui.F_Report.ddlMonth.AddItem("May (5)")
+Gui.F_Report.ddlMonth.AddItem("June (6)")
+Gui.F_Report.ddlMonth.AddItem("July (7)")
+Gui.F_Report.ddlMonth.AddItem("August (8)")
+Gui.F_Report.ddlMonth.AddItem("September (9)")
+Gui.F_Report.ddlMonth.AddItem("October (10)")
+Gui.F_Report.ddlMonth.AddItem("November (11)")
+Gui.F_Report.ddlMonth.AddItem("December (12)")
+F.Intrinsic.Control.For(V.Local.iCnt,V.Ambient.Date.Year,1950,-1)
+	Gui.F_Report.ddlYear.AddItem(V.Local.iCnt)
+F.Intrinsic.Control.Next(V.Local.iCnt)
+F.Intrinsic.Control.CallSub(LoadScreen)
+Gui.F_Report..Show
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.F_Report_UnLoad.Start
+F.Intrinsic.Control.Try
+F.Intrinsic.Control.BlockEvents
+F.Intrinsic.Control.CallSub(SaveScreen)
+F.Intrinsic.Control.CallSub(DeleteXLSXFiles)
+F.Intrinsic.Control.End
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.F_Report_UnLoad.End
+
+Program.Sub.SaveScreen.Start
+F.Intrinsic.Control.Try
+
+F.Global.Registry.AddValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,100,False,"Month",False,V.Screen.F_Report!ddlMonth.ListIndex,0,1/1/1900,12:00:00 AM,"")
+F.Global.Registry.AddValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,200,False,"Year",False,V.Screen.F_Report!ddlYear.ListIndex,0,1/1/1900,12:00:00 AM,"")
+F.Global.Registry.AddValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,300,False,"OPT",V.Screen.F_Report!optDetail.Value,0,0,1/1/1900,12:00:00 AM,"")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.SaveScreen.End
+
+Program.Sub.LoadScreen.Start
+V.Local.iListIndex.Declare
+V.Local.bOpt.Declare
+F.Intrinsic.Control.Try
+
+F.Global.Registry.ReadValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,100,1,0,V.Local.iListIndex)
+Gui.F_Report.ddlMonth.ListIndex(V.Local.iListIndex)
+F.Global.Registry.ReadValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,200,1,0,V.Local.iListIndex)
+Gui.F_Report.ddlYear.ListIndex(V.Local.iListIndex)
+F.Global.Registry.ReadValue(V.Caller.User,V.Caller.CompanyCode,"AP PURCHASE JOURNAL (GCG_6041)",6041,300,0,True,V.Local.bOpt)
+Gui.F_Report.optDetail.Value(V.Local.bOpt)
+Gui.F_Report.optSummary.Value(V.Local.bOpt.Not)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadScreen.End
+
+Program.Sub.cmdRefresh_Click.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.BlockEvents
+Gui.F_Report.progressBarRefresh.Value(0)
+Gui.F_Report.progressBarRefresh.Visible(True)
+
+F.Intrinsic.Control.If(V.DataTable.dtAPItems.Exists)
+	F.Data.DataTable.Close("dtAPItems")
+F.Intrinsic.Control.EndIf
+
+V.Global.iMonth.Set(V.Screen.F_Report!ddlMonth.ListIndex)
+V.Global.iYear.Set(V.Screen.F_Report!ddlYear.Text.Long)
+V.Global.bDetail.Set(V.Screen.F_Report!optDetail.Value)
+
+F.Intrinsic.Control.CallSub(LoadDataTable)
+Gui.F_Report.progressBarRefresh.Value(25)
+F.Intrinsic.Control.CallSub(RemoveInvalidAccount)
+Gui.F_Report.progressBarRefresh.Value(50)
+
+F.Data.DataView.Create("dtAPItems","dvValidItems")
+F.Data.DataView.SetFilter("dtAPItems","dvValidItems","isnull([AMOUNT], 100) <> 0")
+F.Data.DataView.SetSort("dtAPItems","dvValidItems","VEND_NAME asc, INVC_DATE asc, INVOICE_NO asc")
+
+F.Intrinsic.Control.CallSub(ParseAccounts)
+Gui.F_Report.progressBarRefresh.Value(75)
+
+F.Intrinsic.Control.If(V.Global.bDetail.Not)
+	F.Intrinsic.Control.CallSub(BuildSummaryTable)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.CallSub(SetupGridView)
+Gui.F_Report.progressBarRefresh.Value(100)
+
+Gui.F_Report.progressBarRefresh.Visible(False)
+Gui.F_Report.progressBarRefresh.Value(0)
+F.Intrinsic.Control.UnBlockEvents
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdRefresh_Click.End
+
+Program.Sub.LoadDataTable.Start
+'Load invoices from AP_OPEN_ITEMS and AP_HIST that fall in the selected month(s)
+V.Local.sSQLOpen.Declare
+V.Local.sSQLHist.Declare
+V.Local.sSQLGL.Declare
+V.Local.sSQLGLHist.Declare
+V.Local.dStart.Declare
+V.Local.dEnd.Declare
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.If(V.Screen.F_Report!ddlMonth.ListIndex,=,0)
+	'All months for the selected year
+	F.Intrinsic.Date.DateSerial(V.Screen.F_Report!ddlYear.Text.Long,1,1,V.Local.dStart)
+	F.Intrinsic.Date.DateSerial(V.Screen.F_Report!ddlYear.Text.Long,12,31,V.Local.dEnd)
+F.Intrinsic.Control.Else
+	'Specific month
+	F.Intrinsic.Date.DateSerial(V.Screen.F_Report!ddlYear.Text.Long,V.Screen.F_Report!ddlMonth.ListIndex,1,V.Local.dStart)
+	F.Intrinsic.Date.EndOfMonth(V.Local.dStart,V.Local.dEnd)
+F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.String.Build("select VENDOR, rtrim(CUST_VEND_NAME) as VEND_NAME, SUM(AMOUNT) as AMOUNT, GL_ACCOUNT, INVOICE_NO, INVC_DATE from V_GL_DETAIL where INVC_DATE between '{0}' and '{1}' and APPL_TYPE = 'AP' and DB_CR_FLAG = 'D' and TRAN_TYPE <> '07' and GL_ACCOUNT not in ('20100.00', '40710.02', '60810.04', '10200.00') group by VENDOR, CUST_VEND_NAME, INVOICE_NO, INVC_DATE, GL_ACCOUNT;",V.Local.dStart.PervasiveDate,V.Local.dEnd.PervasiveDate,V.Local.sSQLOpen)
+F.Intrinsic.String.Build("select VENDOR, rtrim(CUST_VEND_NAME) as VEND_NAME, SUM(AMOUNT) as AMOUNT, GL_ACCOUNT, INVOICE_NO, INVC_DATE from V_GL_DETAIL where INVC_DATE between '{0}' and '{1}' and APPL_TYPE = 'AP' and TRAN_TYPE != '07' and TRAN_TYPE != '06' and GL_ACCOUNT not in ('20100.00', '40710.02', '60810.04', '10200.00') group by VENDOR, CUST_VEND_NAME, INVOICE_NO, INVC_DATE, GL_ACCOUNT;",V.Local.dStart.PervasiveDate,V.Local.dEnd.PervasiveDate,V.Local.sSQLOpen)
+'F.Intrinsic.String.Build("select VENDOR, rtrim(CUST_VEND_NAME) as VEND_NAME, SUM(AMOUNT) as AMOUNT, GL_ACCOUNT, INVOICE_NO, INVC_DATE from V_GL_DETAIL_HISTORY where INVC_DATE between '{0}' and '{1}' and APPL_TYPE = 'AP' and DB_CR_FLAG = 'D' and TRAN_TYPE <> '07' and GL_ACCOUNT not in ('20100.00', '40710.02', '60810.04', '10200.00') group by VENDOR, CUST_VEND_NAME, INVOICE_NO, INVC_DATE, GL_ACCOUNT;",V.Local.dStart.PervasiveDate,V.Local.dEnd.PervasiveDate,V.Local.sSQLHist)
+F.Intrinsic.String.Build("select VENDOR, rtrim(CUST_VEND_NAME) as VEND_NAME, SUM(AMOUNT) as AMOUNT, GL_ACCOUNT, INVOICE_NO, INVC_DATE from V_GL_DETAIL_HISTORY where INVC_DATE between '{0}' and '{1}' and APPL_TYPE = 'AP' and TRAN_TYPE <> '07' and TRAN_TYPE != '06'	 and GL_ACCOUNT not in ('20100.00', '40710.02', '60810.04', '10200.00') and AR_CODE != 'R' group by VENDOR, CUST_VEND_NAME, INVOICE_NO, INVC_DATE, GL_ACCOUNT;",V.Local.dStart.PervasiveDate,V.Local.dEnd.PervasiveDate,V.Local.sSQLHist)
+
+F.ODBC.Connection!con.OpenCompanyConnection(1000)
+F.Data.DataTable.CreateFromSQL("dtAPItems","con",V.Local.sSQLOpen,True)
+F.Data.DataTable.CreateFromSQL("dtAPHist","con",V.Local.sSQLHist,False)
+F.ODBC.Connection!con.Close
+
+F.Data.DataTable.Merge("dtAPHist","dtAPItems",True,3)
+
+F.Data.DataTable.Close("dtAPHist")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadDataTable.End
+
+Program.Sub.RemoveInvalidAccount.Start
+V.Local.sFilter.Declare
+V.Local.iCnt.Declare
+V.Local.fAmount.Declare
+F.Intrinsic.Control.Try
+
+F.Data.DataView.Create("dtAPItems","dvAccountToReplace")
+F.Data.DataView.SetFilter("dtAPItems","dvAccountToReplace","[GL_ACCOUNT] = '20200.01' or [GL_ACCOUNT] = '40120.04'")
+F.Data.DataView.Create("dtAPItems","dvInvoiceVendSearch")
+
+F.Intrinsic.Control.For(V.Local.iCnt,V.DataView.dtAPItems!dvAccountToReplace.RowCount--,0,-1)
+	F.Intrinsic.String.Build("[VENDOR] = '{0}' and [INVOICE_NO] = '{1}' and [GL_ACCOUNT] not in ('20200.01', '40120.04')",V.DataView.dtAPItems!dvAccountToReplace(V.Local.iCnt).VENDOR!FieldVal,V.DataView.dtAPItems!dvAccountToReplace(V.Local.iCnt).INVOICE_NO!FieldVal,V.Local.sFilter)
+	F.Data.DataView.SetFilter("dtAPItems","dvInvoiceVendSearch",V.Local.sFilter)
+	F.Intrinsic.Control.If(V.DataView.dtAPItems!dvInvoiceVendSearch.RowCount,>,0)
+		'Add to amount in target account
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvAccountToReplace(V.Local.iCnt).AMOUNT!FieldVal,V.DataView.dtAPItems!dvInvoiceVendSearch(0).AMOUNT!FieldVal,V.Local.fAmount)
+		F.Data.DataView.SetValue("dtAPItems","dvInvoiceVendSearch",0,"AMOUNT",V.Local.fAmount)
+	F.Intrinsic.Control.EndIf
+	F.Data.DataView.SetValue("dtAPItems","dvAccountToReplace",V.Local.iCnt,"AMOUNT",0)
+F.Intrinsic.Control.Next(V.Local.iCnt)
+
+F.Data.DataView.Close("dtAPItems","dvAccountToReplace")
+F.Data.DataView.Close("dtAPItems","dvInvoiceVendSearch")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.RemoveInvalidAccount.End
+
+Program.Sub.ParseAccounts.Start
+V.Local.sDesc.Declare
+V.Local.sInvYear.Declare
+V.Local.iCnt.Declare
+V.Local.fAmt.Declare
+V.Local.bExists.Declare
+F.Intrinsic.Control.Try
+
+F.Data.DataTable.AddColumn("dtAPItems","MAT_TOOL_RM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","MAT_PRESS_RM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","SUB_TOOL_RM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","SUB_PRESS_RM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","FREIGHT_IN","Float")
+F.Data.DataTable.AddColumn("dtAPItems","FREIGHT_OUT","Float")
+F.Data.DataTable.AddColumn("dtAPItems","SUPPLIES_TR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","SUPPLIES_PR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","MAINT_TR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","MAINT_PR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","SHIP_SUPPLIES","Float")
+F.Data.DataTable.AddColumn("dtAPItems","HOSPITAL_TR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","HOSPITAL_PR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","HOSPITAL_ADM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","WASTE_REMOVE","Float")
+F.Data.DataTable.AddColumn("dtAPItems","WC_INS","Float")
+F.Data.DataTable.AddColumn("dtAPItems","INSURANCE","Float")
+F.Data.DataTable.AddColumn("dtAPItems","INSURANCE_DESC","String")
+F.Data.DataTable.AddColumn("dtAPItems","OFFICE_EXP","Float")
+F.Data.DataTable.AddColumn("dtAPItems","GROUNDS","Float")
+F.Data.DataTable.AddColumn("dtAPItems","LEGAL_AUDIT","Float")
+F.Data.DataTable.AddColumn("dtAPItems","LEGAL_ADV","Float")
+F.Data.DataTable.AddColumn("dtAPItems","LEGAL_COMM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","LEGAL_PHONE","Float")
+F.Data.DataTable.AddColumn("dtAPItems","TNE_MEALS","Float")
+F.Data.DataTable.AddColumn("dtAPItems","TNE_TNE","Float")
+F.Data.DataTable.AddColumn("dtAPItems","AUTO_EXP","Float")
+F.Data.DataTable.AddColumn("dtAPItems","AUTO_DUES","Float")
+F.Data.DataTable.AddColumn("dtAPItems","UTIL_TR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","UTIL_PR","Float")
+F.Data.DataTable.AddColumn("dtAPItems","UTIL_ADM","Float")
+F.Data.DataTable.AddColumn("dtAPItems","GENERAL","Float")
+F.Data.DataTable.AddColumn("dtAPItems","GENERAL_DESC","String")
+F.Data.DataTable.AddColumn("dtAPItems","N401K_DEFER","Float")
+F.Data.DataTable.AddColumn("dtAPItems","N401K_MATCH","Float")
+
+F.Intrinsic.Control.For(V.Local.iCnt,0,V.DataView.dtAPItems!dvValidItems.RowCount--,1)
+	F.Intrinsic.Control.If(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldValTrim,=,"CASH")
+		F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","PETTY CASH")
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Control.SelectCase(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GL_ACCOUNT!FieldValTrim)
+			F.Intrinsic.Control.Case("40110.01")
+				'Material Tool RM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"MAT_TOOL_RM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40110.02")
+				'Material Press RM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"MAT_PRESS_RM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40120.01")
+				'Sub Contract Tool RM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"SUB_TOOL_RM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40120.02")
+				'Sub Contract Press RM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"SUB_PRESS_RM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40200.02")
+				'Freight In
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"FREIGHT_IN",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.CaseAny("50300.03","50300.04")
+				'Freight Out
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"FREIGHT_OUT",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40600.01")
+				'Supplies TR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"SUPPLIES_TR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40600.02")
+				'Supplies PR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"SUPPLIES_PR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40700.01")
+				'Maintenance TR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"MAINT_TR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.CaseAny("40700.00","40700.02")
+				'Maintenance PR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"MAINT_PR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50060.03")
+				'Shipping Supplies
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"SHIP_SUPPLIES",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40320.03")
+				'Hospitalization TR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"HOSPITAL_TR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40320.02")
+				'Hospitalization PR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"HOSPITAL_PR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40320.01")
+				'Hospitalization ADM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"HOSPITAL_ADM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("41050.02")
+				'Waste Remove
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"WASTE_REMOVE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("40300.01")
+				'W/C Ins
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"WC_INS",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60380.04")
+				'Insurance (Group)
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"INSURANCE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"INSURANCE_DESC","GROUP")
+			F.Intrinsic.Control.Case("60370.04")
+				'Insurance (Comml)
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"INSURANCE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"INSURANCE_DESC","COMML")
+			F.Intrinsic.Control.Case("12200.00")
+				'Insurance (Prepaid)
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"INSURANCE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"INSURANCE_DESC","PREPAID")
+			F.Intrinsic.Control.Case("60600.04")
+				'Office Exp & Supplies
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"OFFICE_EXP",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60260.04")
+				'Grounds & Maint
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GROUNDS",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60550.04")
+				'Legal & Audit
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"LEGAL_AUDIT",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50250.03")
+				'Legal & Adv
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"LEGAL_ADV",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50050.03")
+				'Legal & Comm
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"LEGAL_COMM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60500.04")
+				'Legal & Phone
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"LEGAL_PHONE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50230.03")
+				'T&E Meals
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"TNE_MEALS",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50220.03")
+				'T&E
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"TNE_TNE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("50100.03")
+				'Auto Exp
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"AUTO_EXP",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60620.04")
+				'Auto Dues
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"AUTO_DUES",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60250.06")
+				'Utilities TR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"UTIL_TR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60250.05")
+				'Utilities PR
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"UTIL_PR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("60250.04")
+				'Utilities ADM
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"UTIL_ADM",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("14400.00")
+				'General - Furniture
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","FURNITURE & FIXTURES")
+			F.Intrinsic.Control.CaseAny("14200.00","14300.00")
+				'General - New Equip
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","NEW EQUIP")
+			F.Intrinsic.Control.Case("50240.03")
+				'General - Cust Gift
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","CUST GIFT")
+			F.Intrinsic.Control.Case("60750.04")
+				'General - Water/Sewer
+				F.Intrinsic.Control.If(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"UNW100")
+					V.Local.sDesc.Set("WATER")
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"MON200")
+					V.Local.sDesc.Set("SEWER")
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"BSW100")
+					V.Local.sDesc.Set("EMP WATER")
+				F.Intrinsic.Control.Else
+					V.Local.sDesc.Set("NEW ACCOUNT")
+				F.Intrinsic.Control.EndIf
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC",V.Local.sDesc)
+			F.Intrinsic.Control.Case("20800.10")
+				'General - Net Payroll
+				F.Intrinsic.Control.If(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"CM-P/R")
+					V.Local.sDesc.Set("NET PAYROLL")
+				F.Intrinsic.Control.Else
+					V.Local.sDesc.Set("NEW ACCOUNT")
+				F.Intrinsic.Control.EndIf
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC",V.Local.sDesc)
+			F.Intrinsic.Control.Case("10250.00")
+				'General - Tax Account
+				F.Intrinsic.Control.If(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"CMT100")
+					V.Local.sDesc.Set("TAX ACCOUNT")
+				F.Intrinsic.Control.Else
+					V.Local.sDesc.Set("NEW ACCOUNT")
+				F.Intrinsic.Control.EndIf
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC",V.Local.sDesc)
+			F.Intrinsic.Control.Case("60900.04")
+				'General - oh lord THIS account
+				F.Intrinsic.String.Format(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INVC_DATE!FieldVal,"YYYY",V.Local.sInvYear)
+				F.Intrinsic.String.Build("FDA REG {0}",V.Local.sInvYear,V.Local.sInvYear)
+				F.Intrinsic.Control.If(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"CASH")
+					V.Local.sDesc.Set("PETTY CASH")
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"MON200")
+					V.Local.sDesc.Set("FALSE ALARM VIOLATION")
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"VAL100",or,V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,=,"VAL200")
+					V.Local.sDesc.Set("LOAN PAYMENTS")
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INVOICE_NO!FieldValTrim,=,V.Local.sInvYear)
+					V.Local.sDesc.Set(V.Local.sInvYear)
+				F.Intrinsic.Control.Else
+					V.Local.sDesc.Set("")
+					F.Intrinsic.String.IsInString(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INVOICE_NO!FieldVal,"FEE",True,V.Local.bExists)
+					F.Intrinsic.Control.If(V.Local.bExists)
+						V.Local.sDesc.Set("REFINANCE FEES")
+					F.Intrinsic.Control.EndIf
+					F.Intrinsic.String.IsInString(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INVOICE_NO!FieldVal,"DEP ACCT 0705",True,V.Local.bExists)
+					F.Intrinsic.Control.If(V.Local.bExists)
+						V.Local.sDesc.Set("DEP ACCT 0705")
+					F.Intrinsic.Control.EndIf
+					F.Intrinsic.Control.If(V.Local.sDesc,=,"")
+						V.Local.sDesc.Set("ADM FEE")
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.EndIf
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC",V.Local.sDesc)
+			F.Intrinsic.Control.Case("60850.04")
+				'General - Emp Gift
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","EMP GIFT")
+			F.Intrinsic.Control.Case("20300.05")
+				'General - Est Taxes State
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","EST TAXES - STATE")
+			F.Intrinsic.Control.Case("18700.05")
+				'General - Est Taxes Fed
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","EST TAXES - FED")
+			F.Intrinsic.Control.Case("14500.00")
+				'General - Leasehold Imp
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","LEASEHOLD IMP")
+			F.Intrinsic.Control.Case("50460.03")
+				'General - Job Shop Show
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","JOB SHOP SHOW")
+			F.Intrinsic.Control.Case("60830.04")
+				'General - Misc Emp Exp
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","MISC EMP EXP")
+			F.Intrinsic.Control.Case("60870.04")
+				'General - Donation/Contribution
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","DONATION/CONTRIBUTION")
+			F.Intrinsic.Control.Case("60780.04")
+				'General - Iso Audit
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","ISO AUDIT")
+			F.Intrinsic.Control.Case("60890.04")
+				'General - D.O.L. Misc Tax
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","D.O.L. MISC TAX")
+			F.Intrinsic.Control.Case("60880.04")
+				'General - Environmental Analysis
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","ENVIRONMENTAL ANALYSIS")
+			F.Intrinsic.Control.Case("50450.03")
+				'General - Show Exp
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","SHOW EXP")
+			F.Intrinsic.Control.Case("73310.05")
+				'General - Interest Exp
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","INTEREST EXP")
+			F.Intrinsic.Control.Case("20900.00")
+				'401K Defer
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"N401K_DEFER",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("21000.00")
+				'401K Match
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"N401K_MATCH",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal)
+			F.Intrinsic.Control.Case("21110.00")
+				'General - Loan Payments
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","LOAN PAYMENTS")
+			F.Intrinsic.Control.Case("21100.00")
+				'General - 401 K Adm Fees
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","401 K ADM FEES")
+			F.Intrinsic.Control.CaseElse
+				'Catch All
+				F.Data.DataView.SetValue("dtAPItems","dvValidItems",V.Local.iCnt,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,"GENERAL_DESC","NEW ACCOUNT")
+		F.Intrinsic.Control.EndSelect
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iCnt)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.ParseAccounts.End
+
+Program.Sub.SetupGridView.Start
+V.Local.iVisibleIndex.Declare
+F.Intrinsic.Control.Try
+
+Gui.F_Report.gsgcReport.AddGridviewFromDataview("gvReport","dtAPItems","dvValidItems")
+
+Gui.F_Report.gsgcReport.SetGridviewProperty("gvReport","Editable",False)
+Gui.F_Report.gsgcReport.SetGridviewProperty("gvReport","OptionsViewColumnAutoWidth",False)
+Gui.F_Report.gsgcReport.SetGridviewProperty("gvReport","ColumnPanelRowHeight",50)
+
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VENDOR","Visible",False)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VENDOR","AllowShowHide",False)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GL_ACCOUNT","Visible",False)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GL_ACCOUNT","AllowShowHide",False)
+F.Intrinsic.Control.EndIf
+
+V.Local.iVisibleIndex.Set(-1)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","VisibleIndex",V.Local.iVisibleIndex.++)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","Fixed","Left")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","Fixed","Left")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","VisibleIndex",V.Local.iVisibleIndex.++)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","Fixed","Left")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","Fixed","Left")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","VisibleIndex",V.Local.iVisibleIndex.++)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","VisibleIndex",V.Local.iVisibleIndex.++)
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","Caption","DATE")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","Caption","VENDOR")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","Caption","INVOICE NO.")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","Caption","ACCOUNTS PAYABLE")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","Caption","MATERIAL TOOL RM")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","Caption","MATERIAL PRESS RM")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","Caption","SUB CONTRACT TOOL RM")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","Caption","SUB CONTRACT PRESS RM")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","Caption","FREIGHT IN")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","Caption","FREIGHT OUT")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","Caption","SUPPLIES TR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","Caption","SUPPLIES PR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","Caption","MAINTENANCE TR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","Caption","MAINTENANCE PR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","Caption","SHIPPING SUPPLIES")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","Caption","HOSPITALIZATION TR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","Caption","HOSPITALIZATION PR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","Caption","HOSPITALIZATION ADM")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","Caption","WASTE REMOVE")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","Caption","W/C INS.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","Caption","INSURANCE DESC.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","Caption","INSURACE AMT.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","Caption","OFFICE EXP & SUPPLIES")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","Caption","GROUNDS & MAINT.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","Caption","LEGAL& AUDIT")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","Caption","ADV.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","Caption","COMM.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","Caption","PHONE")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","Caption","T&E MEALS")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","Caption","T&E")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","Caption","AUTO EXP.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","Caption","DUES")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","Caption","UTILITIES TR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","Caption","UTILITIES PR")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","Caption","UTILITIES ADM.")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","Caption","GENERAL & MISC. AMOUNT")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","Caption","GENERAL & MISC. DESCRIPTION")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","Caption","401 K DEFER")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","Caption","401 K MATCH")
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","HeaderWordWrap","Wrap")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","HeaderWordWrap","Wrap")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","HeaderWordWrap","Wrap")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","HeaderWordWrap","Wrap")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","HeaderWordWrap","Wrap")
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","HeaderFontBold",True)
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","HeaderFontBold",True)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","HeaderFontBold",True)
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","HeaderFontBold",True)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","HeaderFontBold",True)
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","HeaderHAlignment","Center")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","HeaderHAlignment","Center")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","HeaderHAlignment","Center")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","HeaderHAlignment","Center")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","HeaderHAlignment","Center")
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","CellHAlignment","Center")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","CellHAlignment","Near")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","CellHAlignment","Near")
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","CellHAlignment","Near")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","CellHAlignment","Near")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","CellHAlignment","Far")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","CellHAlignment","Far")
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","Width",75)
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","VEND_NAME","Width",200)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVOICE_NO","Width",100)
+F.Intrinsic.Control.EndIf
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","Width",90)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","Width",90)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","Width",75)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","Width",120)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","Width",120)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","Width",120)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE_DESC","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","Width",80)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","Width",75)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","Width",110)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL_DESC","Width",150)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","Width",70)
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","Width",70)
+
+F.Intrinsic.Control.If(V.Global.bDetail)
+	Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INVC_DATE","DisplayCustomDateTime","d")
+F.Intrinsic.Control.EndIf
+
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AMOUNT","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_TOOL_RM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAT_PRESS_RM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_TOOL_RM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUB_PRESS_RM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_IN","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","FREIGHT_OUT","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_TR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SUPPLIES_PR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_TR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","MAINT_PR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","SHIP_SUPPLIES","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_TR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_PR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","HOSPITAL_ADM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WASTE_REMOVE","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","WC_INS","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","INSURANCE","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","OFFICE_EXP","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GROUNDS","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_AUDIT","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_ADV","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_COMM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","LEGAL_PHONE","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_MEALS","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","TNE_TNE","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_EXP","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","AUTO_DUES","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_TR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_PR","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","UTIL_ADM","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","GENERAL","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_DEFER","DisplayCustomNumeric","$ #,###.00")
+Gui.F_Report.gsgcReport.SetColumnProperty("gvReport","N401K_MATCH","DisplayCustomNumeric","$ #,###.00")
+
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","AMOUNT","AMOUNT_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","MAT_TOOL_RM","MAT_TOOL_RM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","MAT_PRESS_RM","MAT_PRESS_RM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","SUB_TOOL_RM","SUB_TOOL_RM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","SUB_PRESS_RM","SUB_PRESS_RM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","FREIGHT_IN","FREIGHT_IN_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","FREIGHT_OUT","FREIGHT_OUT_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","SUPPLIES_TR","SUPPLIES_TR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","SUPPLIES_PR","SUPPLIES_PR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","MAINT_TR","MAINT_TR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","MAINT_PR","MAINT_PR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","SHIP_SUPPLIES","SHIP_SUPPLIES_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","HOSPITAL_TR","HOSPITAL_TR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","HOSPITAL_PR","HOSPITAL_PR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","HOSPITAL_ADM","HOSPITAL_ADM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","WASTE_REMOVE","WASTE_REMOVE_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","WC_INS","WC_INS_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","INSURANCE","INSURANCE_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","OFFICE_EXP","OFFICE_EXP_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","GROUNDS","GROUNDS_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","LEGAL_AUDIT","LEGAL_AUDIT_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","LEGAL_ADV","LEGAL_ADV_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","LEGAL_COMM","LEGAL_COMM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","LEGAL_PHONE","LEGAL_PHONE_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","TNE_MEALS","TNE_MEALS_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","TNE_TNE","TNE_TNE_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","AUTO_EXP","AUTO_EXP_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","AUTO_DUES","AUTO_DUES_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","UTIL_TR","UTIL_TR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","UTIL_PR","UTIL_PR_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","UTIL_ADM","UTIL_ADM_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","GENERAL","GENERAL_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","N401K_DEFER","N401K_DEFER_TOT","SUM","$ ","","#,###.00")
+Gui.F_Report.gsgcReport.AddSummaryItem("gvReport","N401K_MATCH","N401K_MATCH_TOT","SUM","$ ","","#,###.00")
+
+Gui.F_Report.gsgcReport.MainView("gvReport")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.SetupGridView.End
+
+Program.Sub.cmdExport_Click.Start
+V.Local.bExcel.Declare
+V.Local.bSave.Declare
+V.Local.sFilePath.Declare
+V.Local.sWorkSheet1.Declare
+V.Local.sWorkSheet2.Declare
+V.Local.sDate.Declare
+V.Local.sTemp.Declare
+V.Local.iCnt.Declare
+V.Local.iRow.Declare
+V.Local.iCol.Declare
+V.Local.fTotal.Declare
+V.Local.sFilter.Declare
+F.Intrinsic.Control.Try
+
+F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+F.Intrinsic.Control.If(V.Global.iYear,=,0)
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.ElseIf(V.Local.bExcel.Not)
+	'No excel
+	F.Intrinsic.UI.Msgbox("Excel is not installed on this machine. Cannot export grid.","EXITING EXPORT MODULE")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.BlockEvents
+
+F.Intrinsic.Control.SelectCase(V.Global.iMonth)
+	F.Intrinsic.Control.Case(0)
+		F.Intrinsic.String.Build("{0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("{0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		V.Local.sDate.Set(V.Global.iYear.String)
+	F.Intrinsic.Control.Case(1)
+		F.Intrinsic.String.Build("JAN {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("JAN {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("JANUARY {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(2)
+		F.Intrinsic.String.Build("FEB {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("FEB {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("FEBRUARY {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(3)
+		F.Intrinsic.String.Build("MAR {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("MAR {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("MARCH {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(4)
+		F.Intrinsic.String.Build("APR {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("APR {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("APRIL {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(5)
+		F.Intrinsic.String.Build("MAY {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("MAY {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("MAY {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(6)
+		F.Intrinsic.String.Build("JUN {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("JUN {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("JUNE {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(7)
+		F.Intrinsic.String.Build("JUL {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("JUL {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("JULY {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(8)
+		F.Intrinsic.String.Build("AUG {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("AUG {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("AUGUST {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(9)
+		F.Intrinsic.String.Build("SEP {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("SEP {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("SEPTEMBER {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(10)
+		F.Intrinsic.String.Build("OCT {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("OCT {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("OCTOBER {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(11)
+		F.Intrinsic.String.Build("NOV {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("NOV {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("NOVEMBER {0}",V.Global.iYear.String,V.Local.sDate)
+	F.Intrinsic.Control.Case(12)
+		F.Intrinsic.String.Build("DEC {0} - 1",V.Global.iYear.String,V.Local.sWorkSheet1)
+		F.Intrinsic.String.Build("DEC {0} - 2",V.Global.iYear.String,V.Local.sWorkSheet2)
+		F.Intrinsic.String.Build("DECEMBER {0}",V.Global.iYear.String,V.Local.sDate)
+F.Intrinsic.Control.EndSelect
+
+F.Automation.MSExcel.CreateAppObject("oExcel")
+F.Intrinsic.String.Build("{0}AP_Journal_{1}_{2}.xlsx",V.Caller.LocalGSSTempDir,V.Ambient.Date.FormatYYYYMMDD,V.Ambient.Time.FormatHHNNSS,V.Local.sFilePath)
+F.Automation.MSExcel.CreateWorkbook("oExcel","oExport",V.Local.sFilePath)
+F.Automation.MSExcel.CreateWorksheet("oExport","oPage1",V.Local.sWorkSheet1)
+F.Automation.MSExcel.OpenWorksheet("oExport","oPage2",2)
+F.Automation.MSExcel.NameWorksheet("oPage2",V.Local.sWorkSheet2)
+V.Local.bSave.Set(True)
+
+F.Automation.MSExcel.WriteCell("oPage1",1,7,"PURCHASE JOURNAL")
+F.Automation.MSExcel.WriteCell("oPage2",1,7,"PURCHASE JOURNAL")
+F.Automation.MSExcel.WriteCell("oPage1",2,7,V.Local.sDate)
+F.Automation.MSExcel.WriteCell("oPage2",2,7,V.Local.sDate)
+F.Automation.MSExcel.WriteCell("oPage1",3,2,"PAGE 1")
+F.Automation.MSExcel.WriteCell("oPage2",3,2,"PAGE 2")
+F.Intrinsic.String.Build("PURCHASE JOURNAL - {0}",V.Local.sDate,V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",1,25,V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",1,25,V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",2,37,"PAGE 1")
+F.Automation.MSExcel.WriteCell("oPage2",2,37,"PAGE 2")
+V.Local.iCol.Set(0)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"DATE")
+	F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"DATE")
+F.Intrinsic.Control.EndIf
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"VENDOR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"VENDOR")
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"INVOICE NO.")
+	F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"INVOICE NO.")
+F.Intrinsic.Control.EndIf
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"ACCOUNTS")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"ACCOUNTS")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PAYABLE")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PAYABLE")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"MATERIAL")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"MATERIAL")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TOOL RM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TOOL RM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"MATERIAL")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"MATERIAL")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PRESS RM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PRESS RM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"SUB CONTRACT")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"SUB CONTRACT")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TOOL RM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TOOL RM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"SUB CONTRACT")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"SUB CONTRACT")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PRESS RM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PRESS RM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"FREIGHT")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"FREIGHT")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"IN")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"IN")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"FREIGHT")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"FREIGHT")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"OUT")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"OUT")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"MAINTENANCE")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"MAINTENANCE")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"MAINTENANCE")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"MAINTENANCE")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"SHIPPING")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"SHIPPING")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"HOSPITALIZATION")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"ADM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"ADM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"WASTE")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"WASTE")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"REMOVE")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"REMOVE")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"W/C")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"W/C")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"INS.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"INS.")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"INSURANCE")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"INSURANCE")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"DESC.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"DESC.")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"INSURANCE")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"INSURANCE")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"AMT.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"AMT.")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"OFFICE EXP")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"OFFICE EXP")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"& SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"& SUPPLIES")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"GROUNDS")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"GROUNDS")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"& MAINT.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"& MAINT.")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"LEGAL &")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"LEGAL &")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"AUDIT")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"AUDIT")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"ADV.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"ADV.")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"COMM.")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"COMM.")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"PHONE")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PHONE")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"T & E")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"T & E")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"T & E")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"MEALS")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"MEALS")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"T & E")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"T & E")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"AUTO")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"AUTO")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"EXP")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"EXP")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol.++,"DUES")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"DUES")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"TR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"PR")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"UTILITIES")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"ADM")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"ADM")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"GENERAL & MISC.")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"GENERAL & MISC.")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"AMOUNT")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"AMOUNT")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"GENERAL & MISC.")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"GENERAL & MISC.")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"DESCRIPTION")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"DESCRIPTION")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"401 K")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"401 K")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"DEFER")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"DEFER")
+F.Automation.MSExcel.WriteCell("oPage1",4,V.Local.iCol.++,"401 K")
+F.Automation.MSExcel.WriteCell("oPage2",4,V.Local.iCol,"401 K")
+F.Automation.MSExcel.WriteCell("oPage1",5,V.Local.iCol,"MATCH")
+F.Automation.MSExcel.WriteCell("oPage2",5,V.Local.iCol,"MATCH")
+
+F.Data.DataView.Create("dtAPItems","dvExport")
+V.Local.sFilter.Set("isnull([AMOUNT], 100) <> 0 and [VEND_NAME] >= '' and [VEND_NAME] <= 'LZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'")
+F.Data.DataView.SetFilter("dtAPItems","dvExport",V.Local.sFilter)
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Data.DataView.SetSort("dtAPItems","dvExport","VEND_NAME asc, INVC_DATE asc, INVOICE_NO asc")
+F.Intrinsic.Control.Else
+	F.Data.DataView.SetSort("dtAPItems","dvExport","VEND_NAME asc")
+F.Intrinsic.Control.EndIf
+'Loop through data
+F.Intrinsic.Control.If(V.DataView.dtAPItems!dvExport.RowCount,=,0)
+	V.Local.iRow.Set(5)
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.For(V.Local.iCnt,0,V.DataView.dtAPItems!dvExport.RowCount--,1)
+	F.Intrinsic.Math.Add(V.Local.iCnt,6,V.Local.iRow)
+	V.Local.iCol.Set(0)
+	F.Intrinsic.Control.If(V.Global.bDetail)
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INVC_DATE!FieldVal,"M/D/YYYY",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.EndIf
+	F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).VEND_NAME!FieldValTrim)
+	F.Intrinsic.Control.If(V.Global.bDetail)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).INVOICE_NO!FieldValTrim)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AMOUNT!FieldVal,"$ #,###.00",V.Local.sTemp)
+	F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_TOOL_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_PRESS_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_TOOL_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_PRESS_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_IN!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_IN!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_OUT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_OUT!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SHIP_SUPPLIES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SHIP_SUPPLIES!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_ADM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WASTE_REMOVE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WASTE_REMOVE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WC_INS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WC_INS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE_DESC!FieldValTrim)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).OFFICE_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).OFFICE_EXP!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GROUNDS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GROUNDS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_AUDIT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_AUDIT!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_ADV!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_ADV!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_COMM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_COMM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_PHONE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_PHONE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_MEALS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_MEALS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_TNE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_TNE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_EXP!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_DUES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_DUES!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_ADM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL_DESC!FieldValTrim)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_DEFER!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_DEFER!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_MATCH!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_MATCH!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iCnt)
+
+F.Intrinsic.Math.Add(V.Local.iRow,2,V.Local.iRow)
+'Totals
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,3,"TOTAL PAGE 1")
+	V.Local.iCol.Set(3)
+F.Intrinsic.Control.Else
+	F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,1,"TOTAL PAGE 1")
+	V.Local.iCol.Set(1)
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Compute("dtAPItems","SUM(AMOUNT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_IN)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_OUT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SHIP_SUPPLIES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WASTE_REMOVE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WC_INS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(INSURANCE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(OFFICE_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GROUNDS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_AUDIT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_ADV)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_COMM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_PHONE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_MEALS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_TNE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_DUES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GENERAL)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_DEFER)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_MATCH)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage1",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+
+V.Local.sFilter.Set("isnull([AMOUNT], 100) <> 0 and [VEND_NAME] > 'LZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'")
+F.Data.DataView.SetFilter("dtAPItems","dvExport",V.Local.sFilter)
+'Loop through data
+F.Intrinsic.Control.If(V.DataView.dtAPItems!dvExport.RowCount,=,0)
+	V.Local.iRow.Set(5)
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.For(V.Local.iCnt,0,V.DataView.dtAPItems!dvExport.RowCount--,1)
+	V.Local.iCol.Set(0)
+	F.Intrinsic.Math.Add(V.Local.iCnt,6,V.Local.iRow)
+	F.Intrinsic.Control.If(V.Global.bDetail)
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INVC_DATE!FieldVal,"M/D/YYYY",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.EndIf
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).VEND_NAME!FieldValTrim)
+	F.Intrinsic.Control.If(V.Global.bDetail)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).INVOICE_NO!FieldValTrim)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AMOUNT!FieldVal,"$ #,###.00",V.Local.sTemp)
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_TOOL_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAT_PRESS_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_TOOL_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUB_PRESS_RM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_IN!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_IN!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_OUT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).FREIGHT_OUT!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SUPPLIES_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).MAINT_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SHIP_SUPPLIES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).SHIP_SUPPLIES!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).HOSPITAL_ADM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WASTE_REMOVE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WASTE_REMOVE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WC_INS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).WC_INS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE_DESC!FieldValTrim)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).INSURANCE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).OFFICE_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).OFFICE_EXP!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GROUNDS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GROUNDS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_AUDIT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_AUDIT!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_ADV!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_ADV!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_COMM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_COMM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_PHONE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).LEGAL_PHONE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_MEALS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_MEALS!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_TNE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).TNE_TNE!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_EXP!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_DUES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).AUTO_DUES!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_TR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_PR!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).UTIL_ADM!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.DataView.dtAPItems!dvExport(V.Local.iCnt).GENERAL_DESC!FieldValTrim)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_DEFER!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_DEFER!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_MATCH!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.String.Format(V.DataView.dtAPItems!dvExport(V.Local.iCnt).N401K_MATCH!FieldVal,"$ #,###.00",V.Local.sTemp)
+		F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iCnt)
+
+F.Intrinsic.Math.Add(V.Local.iRow,2,V.Local.iRow)
+'Totals
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,3,"TOTAL PAGE 2")
+	V.Local.iCol.Set(3)
+F.Intrinsic.Control.Else
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,1,"TOTAL PAGE 2")
+	V.Local.iCol.Set(1)
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Compute("dtAPItems","SUM(AMOUNT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_IN)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_OUT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SHIP_SUPPLIES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WASTE_REMOVE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WC_INS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(INSURANCE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(OFFICE_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GROUNDS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_AUDIT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_ADV)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_COMM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_PHONE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_MEALS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_TNE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_DUES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GENERAL)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_DEFER)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_MATCH)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+
+V.Local.sFilter.Set("")
+F.Intrinsic.Math.Add(V.Local.iRow,2,V.Local.iRow)
+'Totals
+F.Intrinsic.Control.If(V.Global.bDetail)
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,3,"GRAND TOTAL")
+	V.Local.iCol.Set(3)
+F.Intrinsic.Control.Else
+	F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,1,"GRAND TOTAL")
+	V.Local.iCol.Set(1)
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Compute("dtAPItems","SUM(AMOUNT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAT_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_TOOL_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUB_PRESS_RM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_IN)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(FREIGHT_OUT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SUPPLIES_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(MAINT_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(SHIP_SUPPLIES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(HOSPITAL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WASTE_REMOVE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(WC_INS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(INSURANCE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(OFFICE_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GROUNDS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_AUDIT)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_ADV)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_COMM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(LEGAL_PHONE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_MEALS)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(TNE_TNE)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_EXP)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(AUTO_DUES)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_TR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_PR)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(UTIL_ADM)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(GENERAL)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Intrinsic.Math.Add(V.Local.iCol,1,V.Local.iCol)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_DEFER)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+F.Data.DataTable.Compute("dtAPItems","SUM(N401K_MATCH)",V.Local.sFilter,V.Local.fTotal)
+F.Intrinsic.String.Format(V.Local.fTotal,"$ #,###.00",V.Local.sTemp)
+F.Automation.MSExcel.WriteCell("oPage2",V.Local.iRow,V.Local.iCol.++,V.Local.sTemp)
+
+F.Automation.MSExcel.SaveWorkbook("oExport")
+F.Automation.Generic.DestroyObject("oPage1")
+F.Automation.Generic.DestroyObject("oPage2")
+F.Automation.Generic.DestroyObject("oExport")
+F.Automation.Generic.DestroyObject("oExcel")
+F.Intrinsic.Task.ShellExec(0,"OPEN",V.Local.sFilePath,"","",1)
+F.Intrinsic.Control.UnBlockEvents
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Local.bSave)
+		F.Automation.MSExcel.SaveWorkbook("oExport")
+		F.Automation.Generic.DestroyObject("oPage1")
+		F.Automation.Generic.DestroyObject("oPage2")
+		F.Automation.Generic.DestroyObject("oExport")
+		F.Automation.Generic.DestroyObject("oExcel")
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdExport_Click.End
+
+Program.Sub.DeleteXLSXFiles.Start
+V.Local.sFileList.Declare
+V.Local.sFilePath.Declare
+V.Local.iFile.Declare
+F.Intrinsic.Control.Try
+
+F.Intrinsic.File.GetFileList(V.Caller.LocalGSSTempDir,V.Local.sFileList)
+F.Intrinsic.String.Split(V.Local.sFileList,":",V.Local.sFileList)
+
+F.Intrinsic.Control.For(V.Local.iFile,0,V.Local.sFileList.UBound,1)
+	F.Intrinsic.Control.If(V.Local.sFileList(V.Local.iFile).Right5,=,".XLSX")
+		F.Intrinsic.String.Build("{0}{1}",V.Caller.LocalGSSTempDir,V.Local.sFileList(V.Local.iFile),V.Local.sFilePath)
+		F.Intrinsic.File.DeleteFile(V.Local.sFilePath)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iFile)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.DeleteXLSXFiles.End
+
+Program.Sub.BuildSummaryTable.Start
+V.Local.sFilter.Declare
+V.Local.sTemp.Declare
+V.Local.iCnt.Declare
+V.Local.iCnt2.Declare
+V.Local.fAmt.Declare
+F.Intrinsic.Control.Try
+
+'Build summary table from detail table
+F.Data.DataTable.Clone("dtAPItems","dtAPSummary",True)
+F.Data.DataView.Create("dtAPSummary","dvVendor")
+
+Gui.F_Report.progressBarRefresh.Value(0)
+Gui.F_Report.progressBarRefresh.Min(0)
+Gui.F_Report.progressBarRefresh.Max(V.DataView.dtAPItems!dvValidItems.RowCount--)
+F.Intrinsic.Control.For(V.Local.iCnt,0,V.DataView.dtAPItems!dvValidItems.RowCount--,1)
+	Gui.F_Report.progressBarRefresh.Value(V.Local.iCnt)
+	F.Intrinsic.String.Build("[VENDOR] = '{0}'",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,V.Local.sFilter)
+	F.Data.DataView.SetFilter("dtAPSummary","dvVendor",V.Local.sFilter)
+	F.Intrinsic.Control.If(V.DataView.dtAPSummary!dvVendor.RowCount,=,0)
+		F.Data.DataTable.AddRow("dtAPSummary","VENDOR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,"VEND_NAME",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VEND_NAME!FieldVal)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AMOUNT!FieldVal,V.DataView.dtAPSummary!dvVendor(0).AMOUNT!FieldVal,V.Local.fAmt)
+	F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"AMOUNT",V.Local.fAmt)
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAT_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAT_TOOL_RM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).MAT_TOOL_RM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"MAT_TOOL_RM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAT_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAT_PRESS_RM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).MAT_PRESS_RM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"MAT_PRESS_RM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUB_TOOL_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUB_TOOL_RM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).SUB_TOOL_RM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"SUB_TOOL_RM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUB_PRESS_RM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUB_PRESS_RM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).SUB_PRESS_RM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"SUB_PRESS_RM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).FREIGHT_IN!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).FREIGHT_IN!FieldVal,V.DataView.dtAPSummary!dvVendor(0).FREIGHT_IN!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"FREIGHT_IN",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).FREIGHT_OUT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).FREIGHT_OUT!FieldVal,V.DataView.dtAPSummary!dvVendor(0).FREIGHT_OUT!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"FREIGHT_OUT",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUPPLIES_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUPPLIES_TR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).SUPPLIES_TR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"SUPPLIES_TR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUPPLIES_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SUPPLIES_PR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).SUPPLIES_PR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"SUPPLIES_PR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAINT_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAINT_TR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).MAINT_TR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"MAINT_TR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAINT_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).MAINT_PR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).MAINT_PR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"MAINT_PR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SHIP_SUPPLIES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).SHIP_SUPPLIES!FieldVal,V.DataView.dtAPSummary!dvVendor(0).SHIP_SUPPLIES!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"SHIP_SUPPLIES",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_TR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).HOSPITAL_TR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"HOSPITAL_TR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_PR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).HOSPITAL_PR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"HOSPITAL_PR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).HOSPITAL_ADM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).HOSPITAL_ADM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"HOSPITAL_ADM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).WASTE_REMOVE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).WASTE_REMOVE!FieldVal,V.DataView.dtAPSummary!dvVendor(0).WASTE_REMOVE!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"WASTE_REMOVE",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).WC_INS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).WC_INS!FieldVal,V.DataView.dtAPSummary!dvVendor(0).WC_INS!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"WC_INS",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INSURANCE_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Control.For(V.Local.iCnt2,0,V.DataView.dtAPSummary!dvVendor.RowCount,1)
+			F.Intrinsic.Control.If(V.Local.iCnt2,=,V.DataView.dtAPSummary!dvVendor.RowCount)
+				F.Data.DataTable.AddRow("dtAPSummary","VENDOR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,"VEND_NAME",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VEND_NAME!FieldVal,"INSURANCE_DESC",V.Local.sTemp,"INSURANCE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INSURANCE!FieldVal)
+				F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.Control.If(V.Local.sTemp,=,V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).INSURANCE_DESC!FieldVal)
+					F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INSURANCE!FieldVal,V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).INSURANCE!FieldVal,V.Local.fAmt)
+					F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).DataTableIndex,"INSURANCE",V.Local.fAmt)
+					F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).INSURANCE_DESC!FieldVal,=,"")
+					F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).DataTableIndex,"INSURANCE_DESC",V.Local.sTemp,"INSURANCE",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).INSURANCE!FieldVal)
+					F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.iCnt2)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).OFFICE_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).OFFICE_EXP!FieldVal,V.DataView.dtAPSummary!dvVendor(0).OFFICE_EXP!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"OFFICE_EXP",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GROUNDS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GROUNDS!FieldVal,V.DataView.dtAPSummary!dvVendor(0).GROUNDS!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"GROUNDS",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_AUDIT!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_AUDIT!FieldVal,V.DataView.dtAPSummary!dvVendor(0).LEGAL_AUDIT!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"LEGAL_AUDIT",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_ADV!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_ADV!FieldVal,V.DataView.dtAPSummary!dvVendor(0).LEGAL_ADV!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"LEGAL_ADV",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_COMM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_COMM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).LEGAL_COMM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"LEGAL_COMM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_PHONE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).LEGAL_PHONE!FieldVal,V.DataView.dtAPSummary!dvVendor(0).LEGAL_PHONE!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"LEGAL_PHONE",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).TNE_MEALS!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).TNE_MEALS!FieldVal,V.DataView.dtAPSummary!dvVendor(0).TNE_MEALS!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"TNE_MEALS",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).TNE_TNE!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).TNE_TNE!FieldVal,V.DataView.dtAPSummary!dvVendor(0).TNE_TNE!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"TNE_TNE",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AUTO_EXP!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AUTO_EXP!FieldVal,V.DataView.dtAPSummary!dvVendor(0).AUTO_EXP!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"AUTO_EXP",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AUTO_DUES!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).AUTO_DUES!FieldVal,V.DataView.dtAPSummary!dvVendor(0).AUTO_DUES!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"AUTO_DUES",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_TR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_TR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).UTIL_TR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"UTIL_TR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_PR!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_PR!FieldVal,V.DataView.dtAPSummary!dvVendor(0).UTIL_PR!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"UTIL_PR",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_ADM!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).UTIL_ADM!FieldVal,V.DataView.dtAPSummary!dvVendor(0).UTIL_ADM!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"UTIL_ADM",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GENERAL_DESC!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Control.For(V.Local.iCnt2,0,V.DataView.dtAPSummary!dvVendor.RowCount,1)
+			F.Intrinsic.Control.If(V.Local.iCnt2,=,V.DataView.dtAPSummary!dvVendor.RowCount)
+				F.Data.DataTable.AddRow("dtAPSummary","VENDOR",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VENDOR!FieldVal,"VEND_NAME",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).VEND_NAME!FieldVal,"GENERAL_DESC",V.Local.sTemp,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GENERAL!FieldVal)
+				F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.Control.If(V.Local.sTemp,=,V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).GENERAL_DESC!FieldVal)
+					F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GENERAL!FieldVal,V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).GENERAL!FieldVal,V.Local.fAmt)
+					F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).DataTableIndex,"GENERAL",V.Local.fAmt)
+					F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+				F.Intrinsic.Control.ElseIf(V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).GENERAL_DESC!FieldVal,=,"")
+					F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(V.Local.iCnt2).DataTableIndex,"GENERAL_DESC",V.Local.sTemp,"GENERAL",V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).GENERAL!FieldVal)
+					F.Intrinsic.Control.ExitFor(V.Local.iCnt2)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.iCnt2)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).N401K_DEFER!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).N401K_DEFER!FieldVal,V.DataView.dtAPSummary!dvVendor(0).N401K_DEFER!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"N401K_DEFER",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+	V.Local.sTemp.Set(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).N401K_MATCH!FieldValString)
+	F.Intrinsic.Control.If(V.Local.sTemp,!=,"")
+		F.Intrinsic.Math.Add(V.DataView.dtAPItems!dvValidItems(V.Local.iCnt).N401K_MATCH!FieldVal,V.DataView.dtAPSummary!dvVendor(0).N401K_MATCH!FieldVal,V.Local.fAmt)
+		F.Data.DataTable.SetValue("dtAPSummary",V.DataView.dtAPSummary!dvVendor(0).DataTableIndex,"N401K_MATCH",V.Local.fAmt)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iCnt)
+
+F.Data.DataTable.DeleteRow("dtAPItems")
+F.Data.DataTable.Merge("dtAPSummary","dtAPItems",True,2)
+F.Data.DataTable.Close("dtAPSummary")
+F.Data.DataTable.RemoveColumn("dtAPItems","INVOICE_NO")
+F.Data.DataTable.RemoveColumn("dtAPItems","GL_ACCOUNT")
+F.Data.DataTable.RemoveColumn("dtAPItems","INVC_DATE")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage,"ScriptFile",V.Caller.ScriptFile,"CurrentSubroutine",V.Ambient.CurrentSubroutine)
+	F.Intrinsic.Control.CallSub(F_Report_UnLoad)
+F.Intrinsic.Control.EndTry
+Program.Sub.BuildSummaryTable.End
+
+Program.Sub.Comments.Start
+${$5$}$2.0.0.0$}$2
+${$6$}$wnichols$}$20210902134320377$}$h3jCD/nJ6bE/cd0Fx7GbYZBAEscRS8LBO2yOYISFOEn1FyliQZL+PBHYqCjOYCJduXJE3KAhIsUOyQtyGIUDXw==
+Program.Sub.Comments.End
